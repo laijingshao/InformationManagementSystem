@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- Spring整合MyBatis-->
+
+    <!-- 数据源-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/ims?useUnicode=true&amp;characterEncoding=utf-8&amp;useSSL=true&amp;useJDBCCompliantTimezoneShift=true&amp;useLegacyDatetimeCode=false&amp;serverTimezone=Hongkong"/>
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+    <!-- sqlSession-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 连接的数据源-->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 类型别名-->
+        <property name="typeAliasesPackage" value="com.pp.IMS.entity"/>
+    </bean>
+    <!-- 映射器-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!-- 将包内的映射器接口实现全部注册为映射器-->
+        <property name="basePackage" value="com.pp.IMS.dao"/>
+        <!-- 映射器关联的sqlSession-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!-- 声明式事务管理-->
+
+    <!-- jdbc事务管理器-->
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 事务通知-->
+    <tx:advice id="interceptor" transaction-manager="txManager">
+        <!-- 事务通知的属性-->
+        <tx:attributes>
+            <!-- 事务通知的方法和属性值-->
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="search*" read-only="true"/>
+            <tx:method name="*" propagation="REQUIRED"/>
+        </tx:attributes>
+    </tx:advice>
+    <!-- 定义切点并管理事务通知-->
+    <aop:config>
+        <!-- 定义切点-->
+        <aop:pointcut id="pointcut" expression="execution(* com.pp.IMS.service.*.*(..))"/>
+        <!-- 关联切点和事务通知-->
+        <aop:advisor advice-ref="interceptor" pointcut-ref="pointcut"/>
+    </aop:config>
+
+    <!-- 全局扫描-->
+    <!-- 自动扫描包-->
+    <context:component-scan base-package="com.pp.IMS"/>
+    <!-- 开启 aspectJ 的注解开发，自动代理-->
+    <aop:aspectj-autoproxy/>
+
+</beans>
